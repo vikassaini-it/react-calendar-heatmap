@@ -4,16 +4,22 @@ const CalendarHeatmap = props => {
   const {
     dataValues
   } = props;
-  let endDate = new Date();
-  let startDate = new Date();
-  startDate.setFullYear(startDate.getFullYear() - 1);
-  let startYear = startDate.getFullYear();
-  let endYear = endDate.getFullYear();
+  const [endDate, setEndDate] = useState(new Date());
+  const [startDate, setStartDate] = useState(new Date());
+  const [startYear, setStartYear] = useState(2023);
+  const [endYear, setEndYear] = useState(2024);
   const [calenderGrid, setCalendarGrid] = useState([]);
+  const [highestValue, setHighestValue] = useState(-Infinity);
+  useEffect(() => {
+    calculateRange();
+    calculateHighestValue();
+  }, [dataValues]);
   useEffect(() => {
     calculateCalendarGrid();
-  }, [dataValues]);
+    console.log("GG");
+  }, [startDate, endDate]);
   const calculateCalendarGrid = () => {
+    console.log("TT");
     const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
     setCalendarGrid(Array.from({
       length: days
@@ -23,23 +29,48 @@ const CalendarHeatmap = props => {
       return date.toISOString().slice(0, 10);
     }));
   };
-  const highestValue = dataValues === null || dataValues === void 0 ? void 0 : dataValues.reduce((a, b) => Math.max(a, b.count), -Infinity);
-  const getIntensity = activityCount => {
-    return highestValue !== 0 ? Number(activityCount / highestValue) : 0;
+  const calculateRange = () => {
+    let edt = props.endDate ?? new Date();
+    let sdt = props.startDate ?? new Date();
+    sdt.setFullYear(sdt.getFullYear() - 1);
+    setEndDate(edt);
+    setStartDate(sdt);
+    setEndYear(edt.getFullYear());
+    setStartYear(sdt.getFullYear());
   };
-  const getColorFromIntensity = intensity => {
-    const colorCodes = ["#FFEEEE", "#FFCCCC", "#FFAAAA", "#FF8888", "#FF6666", "#FF4444"];
-    const colorIndex = Math.min(Math.floor(intensity * colorCodes.length), colorCodes.length - 1);
-    return colorCodes[colorIndex];
+  const calculateHighestValue = () => {
+    setHighestValue(dataValues === null || dataValues === void 0 ? void 0 : dataValues.reduce((a, b) => Math.max(a, b.count), -Infinity));
+  };
+  const getIntensity = activityCount => {
+    return highestValue !== 0 ? Number(activityCount / highestValue) * 100 : 0;
+  };
+  const getColor = intensity => {
+    const color = props.color ?? "#D2042D";
+    if (intensity !== null && intensity !== undefined) {
+      if (intensity < 15) intensity = 15;
+      return `${color}${intensity}`;
+    } else return color;
+  };
+  const moveYear = direction => {
+    let sdt = new Date(startDate);
+    let edt = new Date(endDate);
+    sdt.setFullYear(sdt.getFullYear() + direction);
+    edt.setFullYear(edt.getFullYear() + direction);
+    setEndDate(edt);
+    setStartDate(sdt);
+    setEndYear(edt.getFullYear());
+    setStartYear(sdt.getFullYear());
   };
   return /*#__PURE__*/React.createElement("div", {
-    className: "p-2"
+    style: {
+      padding: "20px"
+    }
   }, /*#__PURE__*/React.createElement("div", {
-    className: "gap-2",
     style: {
       display: "grid",
       gridAutoFlow: "column",
-      gridTemplateRows: "repeat(7, minmax(0, 1fr)"
+      gridTemplateRows: "repeat(7, minmax(0, 1fr)",
+      gap: "6px"
     }
   }, calenderGrid.map((day, index) => {
     const target = dataValues.find(item => item.date === day);
@@ -47,19 +78,55 @@ const CalendarHeatmap = props => {
     const data = (target === null || target === void 0 ? void 0 : target.data) || [];
     data.reverse();
     const intensity = getIntensity(activityCount);
-    const color = getColorFromIntensity(intensity);
+    const color = getColor(intensity);
     return /*#__PURE__*/React.createElement("div", {
       className: "w-4 h-4 rounded cursor-pointer",
       title: `${activityCount} Posts on ${day}`,
+      key: index,
       style: {
         width: "10px",
         height: "10px",
-        backgroundColor: `${activityCount == 0 ? "#00000010" : String(color)}`
+        backgroundColor: `${activityCount == 0 ? "#00000010" : String(color)}`,
+        borderRadius: "100%",
+        transition: "background-color 200ms linear"
       }
     });
   })), /*#__PURE__*/React.createElement("div", {
-    className: "w-100 d-flex justify-content-between pt-2"
-  }, /*#__PURE__*/React.createElement("div", null, startYear), /*#__PURE__*/React.createElement("div", null, endYear)));
+    style: {
+      width: "100%",
+      display: "flex",
+      justifyContent: "space-between",
+      margin: "15px 5px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "26px",
+      color: getColor(),
+      cursor: "pointer"
+    },
+    onClick: () => {
+      moveYear(-1);
+    }
+  }, "\u21E6"), "\xA0", /*#__PURE__*/React.createElement("div", null, startYear)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", null, endYear), "\xA0", /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: "26px",
+      color: getColor(),
+      cursor: "pointer"
+    },
+    onClick: () => {
+      moveYear(1);
+    }
+  }, "\u21E8"))));
 };
 
 export default CalendarHeatmap;

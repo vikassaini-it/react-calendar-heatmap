@@ -7,7 +7,7 @@ const App = () => {
         const data = [];
         const endDate = new Date(); // Today's date
         const startDate = new Date();
-        startDate.setFullYear(endDate.getFullYear() - 1); // Date one year ago
+        startDate.setFullYear(endDate.getFullYear() - 2);
 
         let currentDate = new Date(startDate);
 
@@ -30,7 +30,12 @@ const App = () => {
 
         return data;
     };
-    return <CalendarHeatmap dataValues={generateDateRangeData()} />;
+    return (
+        <>
+            <CalendarHeatmap dataValues={generateDateRangeData()} />
+            {/* <pre>{JSON.stringify(generateDateRangeData(), undefined, 2)}</pre> */}
+        </>
+    );
 };
 
 export default App;
